@@ -53,9 +53,9 @@ export const BOT_TEXTS = {
   cancelDeleteButton: "❌ Yo'q, bekor qilish",
   askChannelIdentifier:
     "📡 Kanal @username yoki chat ID sini yuboring.\n\n" +
-    "Masalan: @azartnik_uz yoki -1002949185784\n\n" +
+    "Masalan: @azartnik\\_uz yoki -1002949185784\n\n" +
     "⚠️ *Diqqat:* bot shu kanalga *admin* qilib qo'shilgan bo'lishi shart, aks holda kanal ma'lumotlarini ololmayman.\n\n" +
-    "🆔 Kanal ID sini bilmasangiz, @raw_data_bot orqali topishingiz mumkin — kanaldagi istalgan xabarni shu botga forward qiling.",
+    "🆔 Kanal ID sini bilmasangiz, @raw\\_data\\_bot orqali topishingiz mumkin — kanaldagi istalgan xabarni shu botga forward qiling.",
   channelSaved: (title: string) => `✅ "${title}" kanali saqlandi.`,
   channelDeleted: "✅ Kanal o'chirildi.",
   confirmDeleteChannel: (title: string) =>
