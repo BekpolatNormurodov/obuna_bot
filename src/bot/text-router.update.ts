@@ -101,7 +101,7 @@ export class TextRouterUpdate {
       if (error instanceof ChannelNotAdminError) {
         await ctx.reply(BOT_TEXTS.botNotAdminInChannel);
       } else {
-        await ctx.reply(BOT_TEXTS.channelResolveError);
+        await ctx.reply(BOT_TEXTS.channelResolveError, { parse_mode: 'Markdown' });
       }
     }
     return true;

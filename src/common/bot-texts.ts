@@ -61,7 +61,9 @@ export const BOT_TEXTS = {
   confirmDeleteChannel: (title: string) =>
     `"${title}" kanalini o'chirishni tasdiqlaysizmi?`,
   channelResolveError:
-    "⚠️ Kanalni topib bo'lmadi. Kanal @username yoki ID to'g'riligini tekshiring.",
+    "⚠️ Kanalni topib bo'lmadi.\n\n" +
+    "Buning eng ko'p uchraydigan sababi — bot hali bu kanalga umuman qo'shilmagan.\n\n" +
+    "✅ Avval botni shu kanalga *admin* qilib qo'shing, keyin ID/username'ni qaytadan yuboring.",
 
   askBroadcastMessage:
     "📢 Hammaga yubormoqchi bo'lgan xabaringizni yuboring.\n\n" +
