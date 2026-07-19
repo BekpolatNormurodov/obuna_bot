@@ -17,7 +17,11 @@ export class BotUserService {
     return this.prisma.botUser.count();
   }
 
-  findAllIds() {
-    return this.prisma.botUser.findMany({ select: { telegramId: true } });
+  findAllIds(excludeTelegramId?: number) {
+    return this.prisma.botUser.findMany({
+      where:
+        excludeTelegramId !== undefined ? { telegramId: { not: BigInt(excludeTelegramId) } } : undefined,
+      select: { telegramId: true },
+    });
   }
 }

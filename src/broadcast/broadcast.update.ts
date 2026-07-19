@@ -111,7 +111,7 @@ export class BroadcastUpdate {
 
     await ctx.reply(BOT_TEXTS.broadcastSending);
 
-    const users = await this.botUserService.findAllIds();
+    const users = await this.botUserService.findAllIds(Number(broadcast.adminId));
     let sent = 0;
     let failed = 0;
     for (const user of users) {
