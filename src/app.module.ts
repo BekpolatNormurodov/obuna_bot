@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { AdminGuard } from './common/admin.guard';
+import { BotProfileService } from './bot/bot-profile.service';
 import { BotUpdate } from './bot/bot.update';
 import { TextRouterUpdate } from './bot/text-router.update';
 import { ChannelsService } from './channels/channels.service';
@@ -27,6 +28,7 @@ import { SubscriptionService } from './subscription/subscription.service';
     MoviesService,
     PendingUploadService,
     SubscriptionService,
+    BotProfileService,
     BotUpdate,
     ChannelsUpdate,
     MoviesUpdate,

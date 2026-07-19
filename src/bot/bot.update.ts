@@ -28,6 +28,6 @@ export class BotUpdate {
       await ctx.reply(text, buildSubscriptionKeyboard(missing));
       return;
     }
-    await ctx.reply(BOT_TEXTS.welcome);
+    await ctx.reply(BOT_TEXTS.welcome, { parse_mode: 'Markdown' });
   }
 }

@@ -1,6 +1,11 @@
 export const BOT_TEXTS = {
   welcome:
-    "Assalomu alaykum! Kino raqamini yuboring yoki /search <nomi> orqali qidiring.",
+    "🎬 *KINO BOT*ga xush kelibsiz!\n\n" +
+    "Bu yerda minglab kinolarni bir necha soniyada topishingiz mumkin.\n\n" +
+    "📌 *Qanday foydalanish mumkin:*\n" +
+    "🔢 Kino raqamini yuboring — kerakli kino darhol yuboriladi\n" +
+    "🔍 /search _nomi_ — kino nomi bo'yicha qidiring\n\n" +
+    "Xush ko'rilgan tomosha! 🍿",
   subscribeRequired: "Botdan foydalanish uchun quyidagi kanallarga obuna bo'ling:",
   stillNotSubscribed: "⚠️ Siz hali barcha kanallarga obuna bo'lmadingiz.",
   checkSubscriptionButton: '✅ Tekshirish',
