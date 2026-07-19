@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Movie {
+  id        Int      @id @default(autoincrement())
+  title     String
+  fileId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Channel {
+  id        Int      @id @default(autoincrement())
+  chatId    String   @unique
+  username  String?
+  title     String
+  inviteUrl String?
+  createdAt DateTime @default(now())
+}
+
+enum PendingStep {
+  AWAITING_CHOICE
+  WAITING_TITLE
+  WAITING_EDIT_NUMBER
+}
+
+model PendingUpload {
+  id            Int         @id @default(autoincrement())
+  adminId       BigInt      @unique
+  fileId        String
+  caption       String?
+  step          PendingStep
+  targetMovieId Int?
+  createdAt     DateTime    @default(now())
+}
+
+enum ChannelActionStep {
+  WAITING_ADD
+  WAITING_EDIT
+}
+
+model PendingChannelAction {
+  id              Int               @id @default(autoincrement())
+  adminId         BigInt            @unique
+  step            ChannelActionStep
+  targetChannelId Int?
+  createdAt       DateTime          @default(now())
+}
