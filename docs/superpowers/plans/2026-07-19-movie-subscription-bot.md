@@ -789,11 +789,12 @@ export class SubscriptionService {
 
 ```ts
 import { Markup } from 'telegraf';
+import { InlineKeyboardButton } from 'telegraf/types';
 import { BOT_TEXTS } from '../common/bot-texts';
 import { ChannelMembershipResult } from './subscription.service';
 
 export function buildSubscriptionKeyboard(missing: ChannelMembershipResult[]) {
-  const rows = missing.map((channel) => [
+  const rows: InlineKeyboardButton[][] = missing.map((channel) => [
     Markup.button.url(
       channel.title,
       channel.username
@@ -1054,7 +1055,8 @@ git commit -m "feat: add PendingChannelActionService for the channel add/edit st
 - [ ] **Step 1: Create `src/movies/upload.update.ts`**
 
 ```ts
-import { Action, Command, Ctx, On, Update, UseGuards } from 'nestjs-telegraf';
+import { UseGuards } from '@nestjs/common';
+import { Action, Command, Ctx, On, Update } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
 import { Message } from 'telegraf/types';
 import { AdminGuard } from '../common/admin.guard';
@@ -1143,7 +1145,8 @@ git commit -m "feat: add admin video upload handler with save/replace choice"
 - [ ] **Step 1: Create `src/channels/channels.update.ts`**
 
 ```ts
-import { Action, Command, Ctx, Update, UseGuards } from 'nestjs-telegraf';
+import { UseGuards } from '@nestjs/common';
+import { Action, Command, Ctx, Update } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
 import { AdminGuard } from '../common/admin.guard';
 import { BOT_TEXTS } from '../common/bot-texts';
