@@ -8,6 +8,10 @@ import { PendingChannelActionService } from './pending-channel-action.service';
 
 type MatchContext = Context & { match: RegExpExecArray };
 
+function typeEmoji(type: string): string {
+  return type === 'INSTAGRAM' ? '📸' : '📱';
+}
+
 @Update()
 @UseGuards(AdminGuard)
 export class ChannelsUpdate {
@@ -24,7 +28,7 @@ export class ChannelsUpdate {
   private async sendChannelList(ctx: Context) {
     const channels = await this.channelsService.findAll();
     const rows = channels.map((channel) => [
-      { text: channel.title, callback_data: `channel_view:${channel.id}` },
+      { text: `${typeEmoji(channel.type)} ${channel.title}`, callback_data: `channel_view:${channel.id}` },
     ]);
     rows.push([{ text: BOT_TEXTS.addChannelButton, callback_data: 'channel_add' }]);
     const text = channels.length ? BOT_TEXTS.channelsListHeader : BOT_TEXTS.channelsListEmpty;
@@ -34,8 +38,31 @@ export class ChannelsUpdate {
   @Action('channel_add')
   async onAdd(@Ctx() ctx: Context) {
     await ctx.answerCbQuery();
-    await this.pendingChannelActionService.startAdd(ctx.from!.id);
-    await ctx.reply(BOT_TEXTS.askChannelIdentifier, { parse_mode: 'Markdown' });
+    await this.pendingChannelActionService.startTypeChoice(ctx.from!.id);
+    await ctx.reply(BOT_TEXTS.askChannelType, {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: BOT_TEXTS.telegramTypeButton, callback_data: 'channel_type:TELEGRAM' },
+            { text: BOT_TEXTS.instagramTypeButton, callback_data: 'channel_type:INSTAGRAM' },
+          ],
+        ],
+      },
+    });
+  }
+
+  @Action(/^channel_type:(TELEGRAM|INSTAGRAM)$/)
+  async onChooseType(@Ctx() ctx: MatchContext) {
+    await ctx.answerCbQuery();
+    const type = ctx.match[1];
+    const userId = ctx.from!.id;
+    if (type === 'TELEGRAM') {
+      await this.pendingChannelActionService.setWaitingTelegramIdentifier(userId);
+      await ctx.reply(BOT_TEXTS.askChannelIdentifier, { parse_mode: 'Markdown' });
+    } else {
+      await this.pendingChannelActionService.setWaitingInstagramLink(userId);
+      await ctx.reply(BOT_TEXTS.askInstagramLink);
+    }
   }
 
   @Action(/^channel_view:(\d+)$/)
@@ -44,7 +71,7 @@ export class ChannelsUpdate {
     const id = Number(ctx.match[1]);
     const channel = await this.channelsService.findById(id);
     if (!channel) return;
-    await ctx.reply(channel.title, {
+    await ctx.reply(`${typeEmoji(channel.type)} ${channel.title}`, {
       reply_markup: {
         inline_keyboard: [
           [
@@ -60,8 +87,16 @@ export class ChannelsUpdate {
   async onEdit(@Ctx() ctx: MatchContext) {
     await ctx.answerCbQuery();
     const id = Number(ctx.match[1]);
-    await this.pendingChannelActionService.startEdit(ctx.from!.id, id);
-    await ctx.reply(BOT_TEXTS.askChannelIdentifier, { parse_mode: 'Markdown' });
+    const channel = await this.channelsService.findById(id);
+    if (!channel) return;
+    const userId = ctx.from!.id;
+    if (channel.type === 'INSTAGRAM') {
+      await this.pendingChannelActionService.setWaitingInstagramLink(userId, id);
+      await ctx.reply(BOT_TEXTS.askInstagramLink);
+    } else {
+      await this.pendingChannelActionService.setWaitingTelegramIdentifier(userId, id);
+      await ctx.reply(BOT_TEXTS.askChannelIdentifier, { parse_mode: 'Markdown' });
+    }
   }
 
   @Action(/^channel_delete_ask:(\d+)$/)

@@ -4,7 +4,8 @@ import { Telegraf } from 'telegraf';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface ResolvedChannel {
-  chatId: string;
+  type: 'TELEGRAM' | 'INSTAGRAM';
+  chatId: string | null;
   username: string | null;
   title: string;
   inviteUrl: string | null;
@@ -33,7 +34,7 @@ export class ChannelsService {
       }
     }
 
-    return { chatId: String(chat.id), username, title, inviteUrl };
+    return { type: 'TELEGRAM', chatId: String(chat.id), username, title, inviteUrl };
   }
 
   findAll() {

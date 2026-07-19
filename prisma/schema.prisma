@@ -15,13 +15,29 @@ model Movie {
   updatedAt DateTime @updatedAt
 }
 
+enum ChannelType {
+  TELEGRAM
+  INSTAGRAM
+}
+
 model Channel {
-  id        Int      @id @default(autoincrement())
-  chatId    String   @unique
+  id        Int         @id @default(autoincrement())
+  type      ChannelType @default(TELEGRAM)
+  chatId    String?     @unique
   username  String?
   title     String
   inviteUrl String?
+  createdAt DateTime    @default(now())
+}
+
+model InstagramFollow {
+  id        Int      @id @default(autoincrement())
+  channelId Int
+  userId    BigInt
+  confirmed Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@unique([channelId, userId])
 }
 
 enum PendingStep {
@@ -42,8 +58,10 @@ model PendingUpload {
 }
 
 enum ChannelActionStep {
-  WAITING_ADD
-  WAITING_EDIT
+  WAITING_TYPE
+  WAITING_TELEGRAM_IDENTIFIER
+  WAITING_INSTAGRAM_LINK
+  WAITING_INSTAGRAM_TITLE
 }
 
 model PendingChannelAction {
@@ -51,6 +69,7 @@ model PendingChannelAction {
   adminId         BigInt            @unique
   step            ChannelActionStep
   targetChannelId Int?
+  draftLink       String?
   createdAt       DateTime          @default(now())
 }
 

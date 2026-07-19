@@ -65,6 +65,16 @@ export const BOT_TEXTS = {
     "Buning eng ko'p uchraydigan sababi — bot hali bu kanalga umuman qo'shilmagan.\n\n" +
     "✅ Avval botni shu kanalga *admin* qilib qo'shing, keyin ID/username'ni qaytadan yuboring.",
 
+  askChannelType: '📡 Kanal turini tanlang:',
+  telegramTypeButton: '📱 Telegram',
+  instagramTypeButton: '📸 Instagram',
+  askInstagramLink:
+    "📸 Instagram sahifasi havolasini yuboring.\n\n" +
+    "Masalan: https://instagram.com/sizning_sahifa",
+  askInstagramTitle: "✏️ Instagram sahifasi nomini kiriting (foydalanuvchilarga shu nom ko'rsatiladi):",
+  confirmInstagramFollowButton: "✅ Men obuna bo'ldim",
+  instagramConfirmedToast: 'Rahmat! Endi qolgan kanallarni ham tekshiramiz.',
+
   askBroadcastMessage:
     "📢 Hammaga yubormoqchi bo'lgan xabaringizni yuboring.\n\n" +
     "Matn, rasm, video — istalgan turdagi xabar bo'lishi mumkin.",

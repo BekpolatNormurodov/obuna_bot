@@ -6,21 +6,47 @@ import { PrismaService } from '../prisma/prisma.service';
 export class PendingChannelActionService {
   constructor(private readonly prisma: PrismaService) {}
 
-  startAdd(adminId: number) {
+  startTypeChoice(adminId: number) {
     const adminIdBig = BigInt(adminId);
     return this.prisma.pendingChannelAction.upsert({
       where: { adminId: adminIdBig },
-      create: { adminId: adminIdBig, step: ChannelActionStep.WAITING_ADD },
-      update: { step: ChannelActionStep.WAITING_ADD, targetChannelId: null },
+      create: { adminId: adminIdBig, step: ChannelActionStep.WAITING_TYPE },
+      update: { step: ChannelActionStep.WAITING_TYPE, targetChannelId: null, draftLink: null },
     });
   }
 
-  startEdit(adminId: number, targetChannelId: number) {
+  setWaitingTelegramIdentifier(adminId: number, targetChannelId?: number) {
     const adminIdBig = BigInt(adminId);
+    const data = {
+      step: ChannelActionStep.WAITING_TELEGRAM_IDENTIFIER,
+      targetChannelId: targetChannelId ?? null,
+      draftLink: null,
+    };
     return this.prisma.pendingChannelAction.upsert({
       where: { adminId: adminIdBig },
-      create: { adminId: adminIdBig, step: ChannelActionStep.WAITING_EDIT, targetChannelId },
-      update: { step: ChannelActionStep.WAITING_EDIT, targetChannelId },
+      create: { adminId: adminIdBig, ...data },
+      update: data,
+    });
+  }
+
+  setWaitingInstagramLink(adminId: number, targetChannelId?: number) {
+    const adminIdBig = BigInt(adminId);
+    const data = {
+      step: ChannelActionStep.WAITING_INSTAGRAM_LINK,
+      targetChannelId: targetChannelId ?? null,
+      draftLink: null,
+    };
+    return this.prisma.pendingChannelAction.upsert({
+      where: { adminId: adminIdBig },
+      create: { adminId: adminIdBig, ...data },
+      update: data,
+    });
+  }
+
+  setInstagramLink(adminId: number, link: string) {
+    return this.prisma.pendingChannelAction.update({
+      where: { adminId: BigInt(adminId) },
+      data: { step: ChannelActionStep.WAITING_INSTAGRAM_TITLE, draftLink: link },
     });
   }
 

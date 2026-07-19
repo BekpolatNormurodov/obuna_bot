@@ -9,6 +9,7 @@ import { BroadcastService } from './broadcast/broadcast.service';
 import { BroadcastUpdate } from './broadcast/broadcast.update';
 import { ChannelsService } from './channels/channels.service';
 import { ChannelsUpdate } from './channels/channels.update';
+import { InstagramFollowService } from './channels/instagram-follow.service';
 import { PendingChannelActionService } from './channels/pending-channel-action.service';
 import { MoviesService } from './movies/movies.service';
 import { MoviesUpdate } from './movies/movies.update';
@@ -27,6 +28,7 @@ import { BotUserService } from './users/bot-user.service';
   providers: [
     AdminGuard,
     ChannelsService,
+    InstagramFollowService,
     PendingChannelActionService,
     MoviesService,
     PendingUploadService,

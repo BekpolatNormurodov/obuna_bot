@@ -3,7 +3,7 @@ import { Context } from 'telegraf';
 import { Message } from 'telegraf/types';
 import { BOT_TEXTS } from '../common/bot-texts';
 import { getAdminIds } from '../common/admin-ids';
-import { ChannelNotAdminError, ChannelsService } from '../channels/channels.service';
+import { ChannelNotAdminError, ChannelsService, ResolvedChannel } from '../channels/channels.service';
 import { PendingChannelActionService } from '../channels/pending-channel-action.service';
 import { MoviesService } from '../movies/movies.service';
 import { PendingUploadService } from '../movies/pending-upload.service';
@@ -88,23 +88,54 @@ export class TextRouterUpdate {
     const pending = await this.pendingChannelActionService.get(userId);
     if (!pending) return false;
 
-    try {
-      const resolved = await this.channelsService.resolveChannel(text);
-      if (pending.step === 'WAITING_ADD') {
-        await this.channelsService.create(resolved);
-      } else {
-        await this.channelsService.update(pending.targetChannelId as number, resolved);
+    if (pending.step === 'WAITING_TYPE') {
+      await ctx.reply(BOT_TEXTS.pendingChoiceReminder);
+      return true;
+    }
+
+    if (pending.step === 'WAITING_TELEGRAM_IDENTIFIER') {
+      try {
+        const resolved = await this.channelsService.resolveChannel(text);
+        await this.saveChannel(pending.targetChannelId, resolved);
+        await this.pendingChannelActionService.clear(userId);
+        await ctx.reply(BOT_TEXTS.channelSaved(resolved.title));
+      } catch (error) {
+        if (error instanceof ChannelNotAdminError) {
+          await ctx.reply(BOT_TEXTS.botNotAdminInChannel);
+        } else {
+          await ctx.reply(BOT_TEXTS.channelResolveError, { parse_mode: 'Markdown' });
+        }
       }
+      return true;
+    }
+
+    if (pending.step === 'WAITING_INSTAGRAM_LINK') {
+      await this.pendingChannelActionService.setInstagramLink(userId, text);
+      await ctx.reply(BOT_TEXTS.askInstagramTitle);
+      return true;
+    }
+
+    if (pending.step === 'WAITING_INSTAGRAM_TITLE') {
+      const resolved: ResolvedChannel = {
+        type: 'INSTAGRAM',
+        chatId: null,
+        username: null,
+        title: text,
+        inviteUrl: pending.draftLink,
+      };
+      await this.saveChannel(pending.targetChannelId, resolved);
       await this.pendingChannelActionService.clear(userId);
       await ctx.reply(BOT_TEXTS.channelSaved(resolved.title));
-    } catch (error) {
-      if (error instanceof ChannelNotAdminError) {
-        await ctx.reply(BOT_TEXTS.botNotAdminInChannel);
-      } else {
-        await ctx.reply(BOT_TEXTS.channelResolveError, { parse_mode: 'Markdown' });
-      }
+      return true;
     }
-    return true;
+
+    return false;
+  }
+
+  private saveChannel(targetChannelId: number | null, resolved: ResolvedChannel) {
+    return targetChannelId
+      ? this.channelsService.update(targetChannelId, resolved)
+      : this.channelsService.create(resolved);
   }
 
   private async handleMovieLookup(ctx: Context, userId: number, text: string, next: NextFn) {
