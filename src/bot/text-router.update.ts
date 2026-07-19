@@ -122,7 +122,7 @@ export class TextRouterUpdate {
 
     const movie = await this.moviesService.findById(query.value);
     if (!movie) {
-      await ctx.reply(BOT_TEXTS.movieNotFound);
+      await ctx.reply(BOT_TEXTS.movieNotFound, { parse_mode: 'Markdown' });
       return;
     }
     await ctx.replyWithVideo(movie.fileId);

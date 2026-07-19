@@ -30,14 +30,14 @@ export class MoviesUpdate {
     const raw = messageText.replace(/^\/search(@\w+)?\s*/, '');
     const query = parseSearchQuery(raw);
     if (!query) {
-      await ctx.reply(BOT_TEXTS.movieNotFound);
+      await ctx.reply(BOT_TEXTS.movieNotFound, { parse_mode: 'Markdown' });
       return;
     }
 
     if (query.type === 'number') {
       const movie = await this.moviesService.findById(query.value);
       if (!movie) {
-        await ctx.reply(BOT_TEXTS.movieNotFound);
+        await ctx.reply(BOT_TEXTS.movieNotFound, { parse_mode: 'Markdown' });
         return;
       }
       await ctx.replyWithVideo(movie.fileId);
@@ -46,7 +46,7 @@ export class MoviesUpdate {
 
     const movies = await this.moviesService.searchByTitle(query.value);
     if (movies.length === 0) {
-      await ctx.reply(BOT_TEXTS.movieNotFound);
+      await ctx.reply(BOT_TEXTS.movieNotFound, { parse_mode: 'Markdown' });
       return;
     }
     const rows = movies.map((movie) => [
@@ -70,7 +70,7 @@ export class MoviesUpdate {
     const id = Number(ctx.match[1]);
     const movie = await this.moviesService.findById(id);
     if (!movie) {
-      await ctx.reply(BOT_TEXTS.movieNotFound);
+      await ctx.reply(BOT_TEXTS.movieNotFound, { parse_mode: 'Markdown' });
       return;
     }
     await ctx.replyWithVideo(movie.fileId);

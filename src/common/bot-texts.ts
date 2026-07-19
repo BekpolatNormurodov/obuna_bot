@@ -10,7 +10,10 @@ export const BOT_TEXTS = {
   stillNotSubscribed: "⚠️ Siz hali barcha kanallarga obuna bo'lmadingiz.",
   checkSubscriptionButton: '✅ Tekshirish',
 
-  movieNotFound: '⚠️ Bunday kino topilmadi.',
+  movieNotFound:
+    "😔 Afsuski, bunday kino topilmadi.\n\n" +
+    "🔢 Kino raqamini tekshirib qaytadan yuboring\n" +
+    "🔍 Yoki /search _nomi_ orqali qidirib ko'ring",
   searchResultsHeader: 'Topilgan kinolar:',
 
   chooseSaveOrReplace: 'Bu videoni nima qilaman?',
