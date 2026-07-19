@@ -5,6 +5,8 @@ import { AdminGuard } from './common/admin.guard';
 import { BotProfileService } from './bot/bot-profile.service';
 import { BotUpdate } from './bot/bot.update';
 import { TextRouterUpdate } from './bot/text-router.update';
+import { BroadcastService } from './broadcast/broadcast.service';
+import { BroadcastUpdate } from './broadcast/broadcast.update';
 import { ChannelsService } from './channels/channels.service';
 import { ChannelsUpdate } from './channels/channels.update';
 import { PendingChannelActionService } from './channels/pending-channel-action.service';
@@ -14,6 +16,7 @@ import { PendingUploadService } from './movies/pending-upload.service';
 import { UploadUpdate } from './movies/upload.update';
 import { PrismaModule } from './prisma/prisma.module';
 import { SubscriptionService } from './subscription/subscription.service';
+import { BotUserService } from './users/bot-user.service';
 
 @Module({
   imports: [
@@ -28,7 +31,10 @@ import { SubscriptionService } from './subscription/subscription.service';
     MoviesService,
     PendingUploadService,
     SubscriptionService,
+    BotUserService,
+    BroadcastService,
     BotProfileService,
+    BroadcastUpdate,
     BotUpdate,
     ChannelsUpdate,
     MoviesUpdate,

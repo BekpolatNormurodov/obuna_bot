@@ -62,4 +62,17 @@ export const BOT_TEXTS = {
     `"${title}" kanalini o'chirishni tasdiqlaysizmi?`,
   channelResolveError:
     "⚠️ Kanalni topib bo'lmadi. Kanal @username yoki ID to'g'riligini tekshiring.",
+
+  askBroadcastMessage:
+    "📢 Hammaga yubormoqchi bo'lgan xabaringizni yuboring.\n\n" +
+    "Matn, rasm, video — istalgan turdagi xabar bo'lishi mumkin.",
+  broadcastSaved: (id: number) =>
+    `✅ Xabar #${id} sifatida saqlandi.\n\n📢 Hammaga yuborishni tasdiqlaysizmi?`,
+  confirmBroadcastButton: '✅ Ha, yuborish',
+  cancelBroadcastButton: "❌ Yo'q, bekor qilish",
+  broadcastSending: '⏳ Xabar yuborilmoqda, biroz kuting...',
+  broadcastComplete: (sent: number, failed: number) =>
+    `✅ Xabar yuborildi!\n\n👥 Yuborildi: ${sent} ta foydalanuvchiga` +
+    (failed > 0 ? `\n⚠️ Yuborilmadi: ${failed} ta (bot bloklangan bo'lishi mumkin)` : ''),
+  userStats: (count: number) => `👥 Botdan foydalanuvchilar soni: ${count} ta`,
 } as const;

@@ -53,3 +53,31 @@ model PendingChannelAction {
   targetChannelId Int?
   createdAt       DateTime          @default(now())
 }
+
+model BotUser {
+  id         Int      @id @default(autoincrement())
+  telegramId BigInt   @unique
+  createdAt  DateTime @default(now())
+}
+
+model PendingBroadcast {
+  id        Int      @id @default(autoincrement())
+  adminId   BigInt   @unique
+  createdAt DateTime @default(now())
+}
+
+enum BroadcastStatus {
+  DRAFT
+  SENT
+}
+
+model Broadcast {
+  id              Int             @id @default(autoincrement())
+  adminId         BigInt
+  sourceChatId    BigInt
+  sourceMessageId Int
+  status          BroadcastStatus @default(DRAFT)
+  sentCount       Int             @default(0)
+  failedCount     Int             @default(0)
+  createdAt       DateTime        @default(now())
+}

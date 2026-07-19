@@ -15,5 +15,7 @@ export const PUBLIC_COMMANDS = [
 export const ADMIN_COMMANDS = [
   ...PUBLIC_COMMANDS,
   { command: 'kanallar', description: 'Majburiy obuna kanallarini boshqarish' },
+  { command: 'hammaga', description: 'Barcha foydalanuvchilarga xabar yuborish' },
+  { command: 'stats', description: "Foydalanuvchilar sonini ko'rish" },
   { command: 'cancel', description: 'Joriy amalni bekor qilish' },
 ] as const;
