@@ -19,7 +19,9 @@ export const BOT_TEXTS = {
 
   allMoviesHeader: (page: number, totalPages: number) =>
     `🎬 *Barcha kinolar* (${page}/${totalPages}-sahifa):`,
-  noMoviesYet: 'Hozircha kinolar mavjud emas.',
+  noMoviesYet:
+    "📭 Hozircha kinolar mavjud emas.\n\n" +
+    "Tez orada yangi kinolar qo'shiladi, keyinroq qayta urinib ko'ring! 🎬",
   prevPageButton: '⬅️ Oldingi',
   nextPageButton: 'Keyingi ➡️',
 
