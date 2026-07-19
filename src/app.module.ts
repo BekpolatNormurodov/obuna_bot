@@ -28,10 +28,10 @@ import { SubscriptionService } from './subscription/subscription.service';
     PendingUploadService,
     SubscriptionService,
     BotUpdate,
-    TextRouterUpdate,
     ChannelsUpdate,
     MoviesUpdate,
     UploadUpdate,
+    TextRouterUpdate,
   ],
 })
 export class AppModule {}

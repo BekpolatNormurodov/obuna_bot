@@ -19,6 +19,11 @@ export const BOT_TEXTS = {
   editNumberNotFound: (id: number) => `⚠️ #${id} raqamli kino topilmadi.`,
   movieUpdated: (id: number) => `✅ #${id} yangilandi`,
   uploadCancelled: '❌ Bekor qilindi.',
+  confirmReplaceMovie: (id: number, title: string) =>
+    `"#${id} — ${title}" o'rniga shu videoni qo'yaymi?`,
+  confirmReplaceButton: '✅ Ha, almashtirish',
+  cancelReplaceButton: "❌ Yo'q, bekor qilish",
+  pendingChoiceReminder: 'Iltimos, avval yuqoridagi tugmalardan birini tanlang.',
 
   botNotAdminInChannel:
     '⚠️ Bot bu kanalda admin emas, iltimos botni kanalga admin qiling.',

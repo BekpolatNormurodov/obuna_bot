@@ -58,6 +58,15 @@ export class MoviesUpdate {
   @Action(/^movie_get:(\d+)$/)
   async onGetFromSearch(@Ctx() ctx: MatchContext) {
     await ctx.answerCbQuery();
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const missing = await this.subscriptionService.getMissingChannelsForUser(userId);
+    if (missing.length > 0) {
+      await ctx.reply(BOT_TEXTS.subscribeRequired, buildSubscriptionKeyboard(missing));
+      return;
+    }
+
     const id = Number(ctx.match[1]);
     const movie = await this.moviesService.findById(id);
     if (!movie) {

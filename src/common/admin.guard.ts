@@ -1,17 +1,14 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { TelegrafExecutionContext } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
+import { getAdminIds } from './admin-ids';
 
 @Injectable()
 export class AdminGuard implements CanActivate {
   private readonly adminIds: number[];
 
   constructor() {
-    this.adminIds = (process.env.ADMIN_IDS ?? '')
-      .split(',')
-      .map((id) => id.trim())
-      .filter(Boolean)
-      .map(Number);
+    this.adminIds = getAdminIds();
   }
 
   canActivate(context: ExecutionContext): boolean {

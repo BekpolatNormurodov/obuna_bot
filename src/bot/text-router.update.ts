@@ -1,7 +1,8 @@
-import { Ctx, On, Update } from 'nestjs-telegraf';
+import { Ctx, Next, On, Update } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
 import { Message } from 'telegraf/types';
 import { BOT_TEXTS } from '../common/bot-texts';
+import { getAdminIds } from '../common/admin-ids';
 import { ChannelNotAdminError, ChannelsService } from '../channels/channels.service';
 import { PendingChannelActionService } from '../channels/pending-channel-action.service';
 import { MoviesService } from '../movies/movies.service';
@@ -10,13 +11,7 @@ import { parseSearchQuery } from '../movies/search-query';
 import { buildSubscriptionKeyboard } from '../subscription/subscription-message';
 import { SubscriptionService } from '../subscription/subscription.service';
 
-function getAdminIds(): number[] {
-  return (process.env.ADMIN_IDS ?? '')
-    .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean)
-    .map(Number);
-}
+type NextFn = () => Promise<void>;
 
 @Update()
 export class TextRouterUpdate {
@@ -29,22 +24,30 @@ export class TextRouterUpdate {
   ) {}
 
   @On('text')
-  async onText(@Ctx() ctx: Context) {
+  async onText(@Ctx() ctx: Context, @Next() next: NextFn) {
     const userId = ctx.from?.id;
     const text = (ctx.message as Message.TextMessage).text.trim();
-    if (!userId || !text || text.startsWith('/')) return;
+    if (!userId || !text || text.startsWith('/')) {
+      await next();
+      return;
+    }
 
     if (getAdminIds().includes(userId)) {
       if (await this.handlePendingUpload(ctx, userId, text)) return;
       if (await this.handlePendingChannelAction(ctx, userId, text)) return;
     }
 
-    await this.handleMovieLookup(ctx, userId, text);
+    await this.handleMovieLookup(ctx, userId, text, next);
   }
 
   private async handlePendingUpload(ctx: Context, userId: number, text: string) {
     const pending = await this.pendingUploadService.get(userId);
     if (!pending) return false;
+
+    if (pending.step === 'AWAITING_CHOICE' || pending.step === 'CONFIRM_REPLACE') {
+      await ctx.reply(BOT_TEXTS.pendingChoiceReminder);
+      return true;
+    }
 
     if (pending.step === 'WAITING_TITLE') {
       const movie = await this.moviesService.create({ title: text, fileId: pending.fileId });
@@ -55,14 +58,26 @@ export class TextRouterUpdate {
 
     if (pending.step === 'WAITING_EDIT_NUMBER') {
       const id = Number(text);
-      const movie = Number.isInteger(id) ? await this.moviesService.findById(id) : null;
+      if (!Number.isInteger(id)) {
+        await ctx.reply(BOT_TEXTS.askEditNumber);
+        return true;
+      }
+      const movie = await this.moviesService.findById(id);
       if (!movie) {
         await ctx.reply(BOT_TEXTS.editNumberNotFound(id));
         return true;
       }
-      await this.moviesService.updateFileId(id, pending.fileId);
-      await this.pendingUploadService.clear(userId);
-      await ctx.reply(BOT_TEXTS.movieUpdated(id));
+      await this.pendingUploadService.setConfirmReplace(userId, movie.id);
+      await ctx.reply(BOT_TEXTS.confirmReplaceMovie(movie.id, movie.title), {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: BOT_TEXTS.confirmReplaceButton, callback_data: 'confirm_replace' },
+              { text: BOT_TEXTS.cancelReplaceButton, callback_data: 'cancel_replace' },
+            ],
+          ],
+        },
+      });
       return true;
     }
 
@@ -92,9 +107,12 @@ export class TextRouterUpdate {
     return true;
   }
 
-  private async handleMovieLookup(ctx: Context, userId: number, text: string) {
+  private async handleMovieLookup(ctx: Context, userId: number, text: string, next: NextFn) {
     const query = parseSearchQuery(text);
-    if (!query || query.type !== 'number') return;
+    if (!query || query.type !== 'number') {
+      await next();
+      return;
+    }
 
     const missing = await this.subscriptionService.getMissingChannelsForUser(userId);
     if (missing.length > 0) {

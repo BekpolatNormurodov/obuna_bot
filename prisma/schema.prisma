@@ -28,6 +28,7 @@ enum PendingStep {
   AWAITING_CHOICE
   WAITING_TITLE
   WAITING_EDIT_NUMBER
+  CONFIRM_REPLACE
 }
 
 model PendingUpload {

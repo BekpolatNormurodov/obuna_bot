@@ -6,7 +6,8 @@ services:
     environment:
       DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/obuna_bot
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
 
   mysql:
     image: mysql:8
@@ -18,6 +19,11 @@ services:
       - '3306:3306'
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-p${MYSQL_ROOT_PASSWORD}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   mysql_data:

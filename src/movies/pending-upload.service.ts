@@ -33,6 +33,13 @@ export class PendingUploadService {
     });
   }
 
+  setConfirmReplace(adminId: number, targetMovieId: number) {
+    return this.prisma.pendingUpload.update({
+      where: { adminId: BigInt(adminId) },
+      data: { step: PendingStep.CONFIRM_REPLACE, targetMovieId },
+    });
+  }
+
   clear(adminId: number) {
     return this.prisma.pendingUpload.deleteMany({ where: { adminId: BigInt(adminId) } });
   }

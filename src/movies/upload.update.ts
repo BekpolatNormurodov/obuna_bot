@@ -5,6 +5,7 @@ import { Message } from 'telegraf/types';
 import { AdminGuard } from '../common/admin.guard';
 import { BOT_TEXTS } from '../common/bot-texts';
 import { PendingChannelActionService } from '../channels/pending-channel-action.service';
+import { MoviesService } from './movies.service';
 import { PendingUploadService } from './pending-upload.service';
 
 @Update()
@@ -13,6 +14,7 @@ export class UploadUpdate {
   constructor(
     private readonly pendingUploadService: PendingUploadService,
     private readonly pendingChannelActionService: PendingChannelActionService,
+    private readonly moviesService: MoviesService,
   ) {}
 
   @On('video')
@@ -50,6 +52,27 @@ export class UploadUpdate {
     await ctx.answerCbQuery();
     await this.pendingUploadService.setWaitingEditNumber(ctx.from!.id);
     await ctx.reply(BOT_TEXTS.askEditNumber);
+  }
+
+  @Action('confirm_replace')
+  async onConfirmReplace(@Ctx() ctx: Context) {
+    await ctx.answerCbQuery();
+    const userId = ctx.from!.id;
+    const pending = await this.pendingUploadService.get(userId);
+    if (!pending || pending.step !== 'CONFIRM_REPLACE' || pending.targetMovieId === null) {
+      await ctx.reply(BOT_TEXTS.uploadCancelled);
+      return;
+    }
+    await this.moviesService.updateFileId(pending.targetMovieId, pending.fileId);
+    await this.pendingUploadService.clear(userId);
+    await ctx.reply(BOT_TEXTS.movieUpdated(pending.targetMovieId));
+  }
+
+  @Action('cancel_replace')
+  async onCancelReplace(@Ctx() ctx: Context) {
+    await ctx.answerCbQuery();
+    await this.pendingUploadService.clear(ctx.from!.id);
+    await ctx.reply(BOT_TEXTS.uploadCancelled);
   }
 
   @Command('cancel')
