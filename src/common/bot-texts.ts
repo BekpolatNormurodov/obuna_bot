@@ -4,7 +4,8 @@ export const BOT_TEXTS = {
     "Bu yerda minglab kinolarni bir necha soniyada topishingiz mumkin.\n\n" +
     "📌 *Qanday foydalanish mumkin:*\n" +
     "🔢 Kino raqamini yuboring — kerakli kino darhol yuboriladi\n" +
-    "🔍 /search _nomi_ — kino nomi bo'yicha qidiring\n\n" +
+    "🔍 /search _nomi_ — kino nomi bo'yicha qidiring\n" +
+    "🎞 /kinolar — barcha kinolar ro'yxatini ko'ring\n\n" +
     "Xush ko'rilgan tomosha! 🍿",
   subscribeRequired: "Botdan foydalanish uchun quyidagi kanallarga obuna bo'ling:",
   stillNotSubscribed: "⚠️ Siz hali barcha kanallarga obuna bo'lmadingiz.",
@@ -15,6 +16,12 @@ export const BOT_TEXTS = {
     "🔢 Kino raqamini tekshirib qaytadan yuboring\n" +
     "🔍 Yoki /search _nomi_ orqali qidirib ko'ring",
   searchResultsHeader: 'Topilgan kinolar:',
+
+  allMoviesHeader: (page: number, totalPages: number) =>
+    `🎬 *Barcha kinolar* (${page}/${totalPages}-sahifa):`,
+  noMoviesYet: 'Hozircha kinolar mavjud emas.',
+  prevPageButton: '⬅️ Oldingi',
+  nextPageButton: 'Keyingi ➡️',
 
   chooseSaveOrReplace: 'Bu videoni nima qilaman?',
   saveNewButton: '💾 Yangi kino',
@@ -43,7 +50,10 @@ export const BOT_TEXTS = {
   confirmDeleteButton: "✅ Ha, o'chirish",
   cancelDeleteButton: "❌ Yo'q, bekor qilish",
   askChannelIdentifier:
-    "Kanal @username yoki chat ID sini yuboring (masalan @azartnik_uz yoki -1002949185784):",
+    "📡 Kanal @username yoki chat ID sini yuboring.\n\n" +
+    "Masalan: @azartnik_uz yoki -1002949185784\n\n" +
+    "⚠️ *Diqqat:* bot shu kanalga *admin* qilib qo'shilgan bo'lishi shart, aks holda kanal ma'lumotlarini ololmayman.\n\n" +
+    "🆔 Kanal ID sini bilmasangiz, @raw_data_bot orqali topishingiz mumkin — kanaldagi istalgan xabarni shu botga forward qiling.",
   channelSaved: (title: string) => `✅ "${title}" kanali saqlandi.`,
   channelDeleted: "✅ Kanal o'chirildi.",
   confirmDeleteChannel: (title: string) =>

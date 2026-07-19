@@ -35,7 +35,7 @@ export class ChannelsUpdate {
   async onAdd(@Ctx() ctx: Context) {
     await ctx.answerCbQuery();
     await this.pendingChannelActionService.startAdd(ctx.from!.id);
-    await ctx.reply(BOT_TEXTS.askChannelIdentifier);
+    await ctx.reply(BOT_TEXTS.askChannelIdentifier, { parse_mode: 'Markdown' });
   }
 
   @Action(/^channel_view:(\d+)$/)
@@ -61,7 +61,7 @@ export class ChannelsUpdate {
     await ctx.answerCbQuery();
     const id = Number(ctx.match[1]);
     await this.pendingChannelActionService.startEdit(ctx.from!.id, id);
-    await ctx.reply(BOT_TEXTS.askChannelIdentifier);
+    await ctx.reply(BOT_TEXTS.askChannelIdentifier, { parse_mode: 'Markdown' });
   }
 
   @Action(/^channel_delete_ask:(\d+)$/)

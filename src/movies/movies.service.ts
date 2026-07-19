@@ -24,4 +24,16 @@ export class MoviesService {
   updateFileId(id: number, fileId: string) {
     return this.prisma.movie.update({ where: { id }, data: { fileId } });
   }
+
+  async findPage(page: number, pageSize: number) {
+    const [movies, total] = await Promise.all([
+      this.prisma.movie.findMany({
+        orderBy: { id: 'asc' },
+        skip: page * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.movie.count(),
+    ]);
+    return { movies, total };
+  }
 }

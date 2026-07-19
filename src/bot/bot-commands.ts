@@ -9,6 +9,7 @@ export const BOT_PROFILE = {
 export const PUBLIC_COMMANDS = [
   { command: 'start', description: 'Botni ishga tushirish' },
   { command: 'search', description: "Kino nomi yoki raqami bo'yicha qidirish" },
+  { command: 'kinolar', description: "Barcha kinolar ro'yxati" },
 ] as const;
 
 export const ADMIN_COMMANDS = [
