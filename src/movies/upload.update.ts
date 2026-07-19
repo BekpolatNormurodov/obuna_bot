@@ -5,6 +5,7 @@ import { Message } from 'telegraf/types';
 import { AdminGuard } from '../common/admin.guard';
 import { BOT_TEXTS } from '../common/bot-texts';
 import { PendingChannelActionService } from '../channels/pending-channel-action.service';
+import { extractMovieTitle } from './movie-title';
 import { MoviesService } from './movies.service';
 import { PendingUploadService } from './pending-upload.service';
 
@@ -39,12 +40,18 @@ export class UploadUpdate {
   async onChooseSaveNew(@Ctx() ctx: Context) {
     await ctx.answerCbQuery();
     const userId = ctx.from!.id;
-    await this.pendingUploadService.setWaitingTitle(userId);
     const pending = await this.pendingUploadService.get(userId);
-    const text = pending?.caption
-      ? BOT_TEXTS.askTitleWithSuggestion(pending.caption)
-      : BOT_TEXTS.askTitle;
-    await ctx.reply(text);
+
+    if (pending?.caption) {
+      const title = extractMovieTitle(pending.caption);
+      const movie = await this.moviesService.create({ title, fileId: pending.fileId });
+      await this.pendingUploadService.clear(userId);
+      await ctx.reply(BOT_TEXTS.movieAutoSaved(movie.id, title));
+      return;
+    }
+
+    await this.pendingUploadService.setWaitingTitle(userId);
+    await ctx.reply(BOT_TEXTS.askTitle);
   }
 
   @Action('save_replace')

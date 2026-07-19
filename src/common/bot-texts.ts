@@ -25,14 +25,14 @@ export const BOT_TEXTS = {
   prevPageButton: '⬅️ Oldingi',
   nextPageButton: 'Keyingi ➡️',
 
-  chooseSaveOrReplace: 'Bu videoni nima qilaman?',
+  chooseSaveOrReplace: '🎬 Bu videoni nima qilamiz?',
   saveNewButton: '💾 Yangi kino',
   replaceExistingButton: '✏️ Mavjudini almashtirish',
-  askTitle: 'Kino nomini kiriting:',
-  askTitleWithSuggestion: (caption: string) =>
-    `Kino nomini kiriting (yoki tavsiya etilgan nomni yuboring: "${caption}"):`,
-  movieSaved: (id: number) => `✅ Saqlandi, raqami: ${id}`,
-  askEditNumber: "Almashtirmoqchi bo'lgan kino raqamini kiriting:",
+  askTitle: '✏️ Kino nomini kiriting:',
+  movieSaved: (id: number) => `✅ Saqlandi!\n🔢 Raqami: #${id}`,
+  movieAutoSaved: (id: number, title: string) =>
+    `✅ Kino avtomatik saqlandi!\n\n🎬 Nomi: ${title}\n🔢 Raqami: #${id}`,
+  askEditNumber: "🔢 Almashtirmoqchi bo'lgan kino raqamini kiriting:",
   editNumberNotFound: (id: number) => `⚠️ #${id} raqamli kino topilmadi.`,
   movieUpdated: (id: number) => `✅ #${id} yangilandi`,
   uploadCancelled: '❌ Bekor qilindi.',
