@@ -6,7 +6,7 @@
 
 **Architecture:** NestJS app (no HTTP server — bootstrapped via `NestFactory.createApplicationContext`) using `nestjs-telegraf` for all bot handlers, Prisma/MySQL for persistence, long-polling transport. Two pure-logic modules (subscription aggregation, search-query parsing) are unit tested; everything else is Telegram-API-dependent and is verified manually against the real bot, per the spec's testing approach.
 
-**Tech Stack:** NestJS 10, `nestjs-telegraf` + `telegraf` v4, Prisma 5 + MySQL, Jest (for the two pure-logic modules only), PM2 for process management.
+**Tech Stack:** NestJS 10, `nestjs-telegraf` + `telegraf` v4, Prisma 5 + MySQL, Jest (for the two pure-logic modules only), Docker Compose (`bot` + `mysql` services) for running the whole stack.
 
 **Spec:** `docs/superpowers/specs/2026-07-19-movie-subscription-bot-design.md`
 
@@ -15,8 +15,8 @@
 - All user-facing text (messages, buttons, errors) is in Uzbek (Latin script) — centralized in one `BOT_TEXTS` constants module (Task 3), no inline string literals in handlers.
 - Only Telegram `file_id` is ever stored for a movie — never download or re-upload video bytes.
 - Admins are a fixed list from `.env` (`ADMIN_IDS`), never stored in the database or editable from the bot.
-- No Docker, no Redis — local MySQL + PM2 process management only.
-- Known seed data: admins `7548669824` (`@mobiledoctor_fix`) and `2053690211` (`@MrDeveloper2827`); channel `AZARTNIK UZ`, `chatId -1002949185784` (added via the bot's own `/kanallar` flow post-deploy, not a DB seed — see Task 17).
+- Docker Compose runs the app (`bot` service, built from a repo `Dockerfile`) and MySQL (`mysql` service, official image) — no Redis, no PM2. Inside the Compose network the `bot` container reaches MySQL at host `mysql`; `.env`'s own `DATABASE_URL` uses `localhost` for host-side tooling (e.g. running Prisma CLI directly during development) — `docker-compose.yml` overrides `DATABASE_URL` for the `bot` service so the two never conflict.
+- Known seed data: admins `7548669824` (`@mobiledoctor_fix`) and `2053690211` (`@MrDeveloper2827`); channel `AZARTNIK UZ`, `chatId -1002949185784` (added via the bot's own `/kanallar` flow post-deploy, not a DB seed — see Task 16).
 - `.env` is git-ignored and never committed; `BOT_TOKEN` is never written into any committed file.
 
 ---
@@ -29,11 +29,13 @@
 - Create: `nest-cli.json`
 - Create: `.gitignore`
 - Create: `.env.example`
+- Create: `Dockerfile`
+- Create: `docker-compose.yml`
 - Create: `src/main.ts`
 - Create: `src/app.module.ts`
 
 **Interfaces:**
-- Produces: `AppModule` (empty `@Module({})` for now, extended in every later task and finalized in Task 17), `bootstrap()` entrypoint in `main.ts`.
+- Produces: `AppModule` (empty `@Module({})` for now, extended in every later task and finalized in Task 16), `bootstrap()` entrypoint in `main.ts`, a `Dockerfile`/`docker-compose.yml` pair that later tasks don't need to touch again (Task 16 only adds README instructions around them).
 
 - [ ] **Step 1: Create `package.json`**
 
@@ -121,10 +123,68 @@ dist/
 ```
 BOT_TOKEN=
 ADMIN_IDS=7548669824,2053690211
-DATABASE_URL="mysql://root:password@localhost:3306/obuna_bot"
+MYSQL_ROOT_PASSWORD=change_me
+DATABASE_URL="mysql://root:change_me@localhost:3306/obuna_bot"
 ```
 
-- [ ] **Step 6: Create `src/app.module.ts`**
+`DATABASE_URL` here uses `localhost` because it's what host-side tools
+(Prisma CLI run directly from your machine, e.g. in Task 2) connect
+through — `docker-compose.yml` (next step) overrides this to the
+in-network hostname `mysql` for the `bot` container itself, so both
+contexts work off the same `.env`.
+
+- [ ] **Step 6: Create `Dockerfile`**
+
+```dockerfile
+FROM node:20-bookworm-slim
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+```
+
+(`bookworm-slim` rather than `alpine` — Prisma's query engine has known
+friction with musl libc on Alpine; Debian-slim avoids that class of
+problem entirely.)
+
+- [ ] **Step 7: Create `docker-compose.yml`**
+
+```yaml
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/obuna_bot
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: obuna_bot
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
+```
+
+The `environment:` block under `bot` overrides the `DATABASE_URL` it would
+otherwise inherit from `env_file: .env`, forcing the container to always
+reach MySQL via the Compose network hostname `mysql` regardless of what
+`.env` says. The `mysql` service also publishes `3306` to the host so
+host-side Prisma CLI commands (Task 2) can reach it at `localhost:3306`.
+
+- [ ] **Step 8: Create `src/app.module.ts`**
 
 ```ts
 import { Module } from '@nestjs/common';
@@ -133,7 +193,7 @@ import { Module } from '@nestjs/common';
 export class AppModule {}
 ```
 
-- [ ] **Step 7: Create `src/main.ts`**
+- [ ] **Step 9: Create `src/main.ts`**
 
 ```ts
 import 'dotenv/config';
@@ -147,21 +207,21 @@ async function bootstrap() {
 bootstrap();
 ```
 
-- [ ] **Step 8: Install dependencies**
+- [ ] **Step 10: Install dependencies**
 
 Run: `npm install`
 Expected: `node_modules/` populated, no errors.
 
-- [ ] **Step 9: Verify the project builds**
+- [ ] **Step 11: Verify the project builds**
 
 Run: `npm run build`
 Expected: succeeds, `dist/main.js` created.
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 12: Commit**
 
 ```bash
-git add package.json tsconfig.json nest-cli.json .gitignore .env.example src/main.ts src/app.module.ts
-git commit -m "chore: scaffold NestJS project"
+git add package.json tsconfig.json nest-cli.json .gitignore .env.example Dockerfile docker-compose.yml src/main.ts src/app.module.ts
+git commit -m "chore: scaffold NestJS project with Docker Compose"
 ```
 
 ---
@@ -273,21 +333,30 @@ import { PrismaService } from './prisma.service';
 export class PrismaModule {}
 ```
 
-- [ ] **Step 4: Copy `.env.example` to `.env` and fill in a real local MySQL URL**
+- [ ] **Step 4: Copy `.env.example` to `.env` and fill in real values**
 
-Run: `cp .env.example .env` (then edit `DATABASE_URL` and `BOT_TOKEN` in `.env` — a real bot token can be requested from @BotFather; `.env` is git-ignored)
+Run: `cp .env.example .env` (then edit `BOT_TOKEN` — request one from
+@BotFather — and pick a real `MYSQL_ROOT_PASSWORD`, updating the password
+in `DATABASE_URL` to match; `.env` is git-ignored)
 
-- [ ] **Step 5: Run the initial migration against local MySQL**
+- [ ] **Step 5: Start only the `mysql` container**
+
+Run: `docker compose up -d mysql`
+Expected: container starts and stays healthy; `docker compose ps` shows
+`mysql` as `running`. Its `3306:3306` port mapping (from Task 1) makes it
+reachable at `localhost:3306`, matching `.env`'s `DATABASE_URL` host.
+
+- [ ] **Step 6: Run the initial migration from the host against that container**
 
 Run: `npx prisma migrate dev --name init`
-Expected: migration succeeds, `Movie`, `Channel`, `PendingUpload`, `PendingChannelAction` tables exist in the local database.
+Expected: migration succeeds, `Movie`, `Channel`, `PendingUpload`, `PendingChannelAction` tables exist in the `obuna_bot` database inside the container.
 
-- [ ] **Step 6: Verify the project still builds**
+- [ ] **Step 7: Verify the project still builds**
 
 Run: `npm run build`
 Expected: succeeds (Prisma client generated as part of `migrate dev`).
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add prisma/schema.prisma src/prisma/prisma.service.ts src/prisma/prisma.module.ts .gitignore
@@ -1424,17 +1493,16 @@ git commit -m "feat: add /search command handler"
 
 ---
 
-### Task 16: Bootstrap, Module Wiring, PM2 & Docs
+### Task 16: Bootstrap, Module Wiring & Docs
 
 **Files:**
 - Modify: `src/app.module.ts`
 - Modify: `src/main.ts`
-- Create: `ecosystem.config.js`
 - Create: `README.md`
 
 **Interfaces:**
-- Consumes: every provider/Update class from Tasks 2–15.
-- Produces: a fully wired, runnable `AppModule`; a PM2 process definition; operator-facing setup docs.
+- Consumes: every provider/Update class from Tasks 2–15; `Dockerfile`/`docker-compose.yml` from Task 1.
+- Produces: a fully wired, runnable `AppModule`; operator-facing setup docs. No new deployment files — `Dockerfile`/`docker-compose.yml` already exist from Task 1.
 
 - [ ] **Step 1: Replace `src/app.module.ts`**
 
@@ -1494,26 +1562,7 @@ async function bootstrap() {
 bootstrap();
 ```
 
-- [ ] **Step 3: Create `ecosystem.config.js`**
-
-```js
-module.exports = {
-  apps: [
-    {
-      name: 'obuna-bot',
-      script: 'dist/main.js',
-      instances: 1,
-      autorestart: true,
-      watch: false,
-      env: {
-        NODE_ENV: 'production',
-      },
-    },
-  ],
-};
-```
-
-- [ ] **Step 4: Create `README.md`**
+- [ ] **Step 3: Create `README.md`**
 
 ```markdown
 # Obuna Bot
@@ -1521,24 +1570,29 @@ module.exports = {
 Kino obuna Telegram bot — NestJS + nestjs-telegraf + Prisma/MySQL. Kino
 videolar serverga yuklanmaydi — faqat Telegram `file_id` bazada saqlanadi.
 
-## Lokal ishga tushirish
+## Docker bilan ishga tushirish
 
-1. `cp .env.example .env` va `BOT_TOKEN`, `DATABASE_URL` ni to'ldiring.
+1. `cp .env.example .env` va `BOT_TOKEN` ni to'ldiring, `MYSQL_ROOT_PASSWORD`
+   uchun o'zingizning parolingizni tanlang (`DATABASE_URL` dagi parol bilan
+   bir xil bo'lsin).
+2. `docker compose up -d --build`
+
+Bu ikkita konteyner ishga tushiradi: `mysql` (ma'lumotlar bazasi) va `bot`
+(ilovaning o'zi). `bot` konteyneri ishga tushishidan oldin
+`npx prisma migrate deploy` avtomatik bajariladi, shuning uchun sxema har
+doim yangilangan bo'ladi.
+
+Keyingi relizlarda (kod o'zgarganda): `docker compose up -d --build`.
+Loglarni ko'rish: `docker compose logs -f bot`.
+To'xtatish: `docker compose down` (ma'lumotlar bazasi volume saqlanib
+qoladi).
+
+## Lokal rivojlantirish (ixtiyoriy, Docker'siz tezroq iteratsiya uchun)
+
+1. `docker compose up -d mysql` (faqat bazani konteynerda ishga tushiradi)
 2. `npm install`
-3. `npx prisma migrate dev --name init`
+3. `npx prisma migrate dev`
 4. `npm run start:dev`
-
-## Production (PM2)
-
-\`\`\`bash
-npm install
-npx prisma generate
-npx prisma migrate deploy
-npm run build
-pm2 start ecosystem.config.js --name obuna-bot
-\`\`\`
-
-Keyingi relizlarda: `pm2 restart obuna-bot`.
 
 ## Boshlang'ich sozlash
 
@@ -1560,21 +1614,22 @@ serverida davriy `mysqldump` (masalan kunlik cron) sozlash tavsiya
 etiladi.
 ```
 
-- [ ] **Step 5: Run the full test suite**
+- [ ] **Step 4: Run the full test suite**
 
 Run: `npm test`
 Expected: PASS — all 8 tests from Tasks 5 and 6 green, no other suites.
 
-- [ ] **Step 6: Verify the project builds end-to-end**
+- [ ] **Step 5: Verify the project builds end-to-end**
 
 Run: `npm run build`
 Expected: succeeds.
 
-- [ ] **Step 7: Manual verification against the real bot**
+- [ ] **Step 6: Manual verification against the real bot, via Docker Compose**
 
-With a valid `BOT_TOKEN` in `.env` and local MySQL running:
-
-Run: `npm run start:dev`
+Run: `docker compose up -d --build`
+Expected: `docker compose ps` shows both `bot` and `mysql` as running;
+`docker compose logs bot` shows no crash/exception on startup (Telegraf
+long-polling has started).
 
 Then, from a non-admin Telegram account:
 1. Send `/start` → expect the subscription-gate message (no channels added yet, so the gate is empty and it should fall straight to the welcome text — add a test channel via an admin account first to see the gate message).
@@ -1588,18 +1643,22 @@ From an admin account (`ADMIN_IDS`):
 5. From any subscribed account, send that `id` as a bare number → expect the video to be returned.
 6. Send `/search <part of the title>` → expect a button list; tapping one returns the video.
 
-- [ ] **Step 8: Commit**
+If a step misbehaves, check `docker compose logs -f bot` for the stack
+trace before editing code.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add src/app.module.ts ecosystem.config.js README.md
-git commit -m "feat: wire AppModule, add PM2 config and setup docs"
+git add src/app.module.ts README.md
+git commit -m "feat: wire AppModule and add Docker setup docs"
 ```
 
 ---
 
 ## Self-Review Notes
 
-- **Spec coverage:** force-subscription gate (Tasks 5, 8), admin-managed channels with auto-resolved title/invite link (Tasks 7, 13), admin video upload → save-new/replace-existing via inline buttons with DB-persisted state (Tasks 10–12, 14), number/search movie retrieval (Tasks 6, 9, 14, 15), Uzbek-only copy (Task 3), file_id-only storage (Tasks 2, 9, 12), PM2 deployment + backup note (Task 16) — all covered.
+- **Spec coverage:** force-subscription gate (Tasks 5, 8), admin-managed channels with auto-resolved title/invite link (Tasks 7, 13), admin video upload → save-new/replace-existing via inline buttons with DB-persisted state (Tasks 10–12, 14), number/search movie retrieval (Tasks 6, 9, 14, 15), Uzbek-only copy (Task 3), file_id-only storage (Tasks 2, 9, 12), Docker Compose deployment + backup note (Tasks 1, 16) — all covered.
 - **Schema deviation from spec:** `PendingStep` gained a third value (`AWAITING_CHOICE`) and a new `PendingChannelAction` table was added beyond the spec's literal schema — both are documented inline in Task 2 as necessary consequences of the state-machine approach the spec approved, not scope creep.
+- **Deployment deviation from the original spec draft:** the spec initially specified PM2 + bare local MySQL; this was superseded mid-planning by a Docker Compose requirement (`bot` + `mysql` services). The spec's Deployment section and this plan (Tasks 1, 2, 16) were both updated to match — no PM2 references remain.
 - **Seed script dropped:** the spec allowed an "optional" DB seed for the known channel, but seeding it directly would produce a channel with no `username`/`inviteUrl`, breaking its subscription button. Task 16 instead documents using the bot's own `/kanallar` → `➕ Qo'shish` flow post-deploy, which correctly resolves the invite link via the Telegram API.
 - **Type consistency checked:** `PendingUploadService`/`PendingChannelActionService` method names and signatures match their call sites in `UploadUpdate`, `ChannelsUpdate`, and `TextRouterUpdate`; `BOT_TEXTS` keys used across Tasks 8, 12, 13, 14, 15 all exist in the Task 3 definition; `ChannelsService.resolveChannel`'s `ResolvedChannel` shape matches `channelsService.create`/`update` call sites in Task 14.

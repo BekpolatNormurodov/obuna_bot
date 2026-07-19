@@ -162,22 +162,24 @@ languages, no leftover English defaults from libraries. Style rules:
 
 ## Deployment
 
-- Runs as a plain NestJS app against local MySQL — no Docker, no Redis,
-  consistent with the local-infra pattern used elsewhere.
-- **Process manager: PM2** (`ecosystem.config.js`) runs the built
-  `dist/main.js`, auto-restarts on crash, and captures stdout/stderr to log
-  files. First deploy: `pm2 start ecosystem.config.js --name obuna-bot`;
-  subsequent releases: `pm2 restart obuna-bot`.
-- **Release flow:** `npm install` → `npx prisma generate` →
-  `npx prisma migrate deploy` → `npm run build` → `pm2 restart obuna-bot`.
-- **Config:** `.env` holds `BOT_TOKEN`, `ADMIN_IDS`, `DATABASE_URL`. `.env`
-  is git-ignored and never committed; the bot token is not recorded in this
-  document. `.gitignore` also covers `node_modules/`, `dist/`, and PM2 log
-  files.
-- **Backups:** a periodic `mysqldump` (e.g. daily cron) of the database is
-  worth having — `Movie.fileId` entries depend on the admin's original
-  uploads and aren't trivially re-creatable if the DB is lost, even though
-  Telegram itself still hosts the actual video files.
+- **Docker Compose**, two services: `bot` (built from a repo `Dockerfile`)
+  and `mysql` (official `mysql:8` image with a named volume for
+  persistence). No Redis, no PM2 — Docker's own `restart: unless-stopped`
+  policy replaces PM2's process-supervision role.
+- **Release flow:** `docker compose up -d --build` builds the app image,
+  (re)creates the `bot` container, and runs `npx prisma migrate deploy`
+  automatically on container start (before the app process starts) so
+  schema is always current before the bot begins polling.
+- **Config:** `.env` holds `BOT_TOKEN`, `ADMIN_IDS`, `MYSQL_ROOT_PASSWORD`,
+  `DATABASE_URL` (pointing at the `mysql` service hostname inside the
+  Compose network, e.g. `mysql://root:<password>@mysql:3306/obuna_bot`).
+  `.env` is git-ignored and never committed; the bot token is not recorded
+  in this document. `.gitignore` also covers `node_modules/` and `dist/`.
+- **Backups:** a periodic `mysqldump` (e.g. daily cron, run via
+  `docker compose exec mysql mysqldump ...`) of the database is worth
+  having — `Movie.fileId` entries depend on the admin's original uploads
+  and aren't trivially re-creatable if the DB is lost, even though Telegram
+  itself still hosts the actual video files.
 - Prisma migrations manage schema; an optional seed script may insert the
   known channel above.
 
