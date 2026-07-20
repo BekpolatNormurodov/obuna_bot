@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { Action, Command, Ctx, Next, On, Update } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
 import { Message } from 'telegraf/types';
@@ -17,6 +17,8 @@ function sleep(ms: number) {
 
 @Update()
 export class BroadcastUpdate {
+  private readonly logger = new Logger(BroadcastUpdate.name);
+
   constructor(
     private readonly broadcastService: BroadcastService,
     private readonly botUserService: BotUserService,
@@ -49,7 +51,11 @@ export class BroadcastUpdate {
   async onMessage(@Ctx() ctx: Context, @Next() next: NextFn) {
     const userId = ctx.from?.id;
     if (userId) {
-      await this.botUserService.track(userId);
+      try {
+        await this.botUserService.track(userId);
+      } catch (error) {
+        this.logger.warn(`Failed to track user ${userId}: ${error instanceof Error ? error.message : error}`);
+      }
     }
 
     if (!userId) {
